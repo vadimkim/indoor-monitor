@@ -18,8 +18,10 @@
 // Globals and display init
 Nokia_5110 lcd = Nokia_5110 (RST, CE, DC, DIN, CLK);
 DHT dht(DHTPIN, DHTTYPE);
-// Init the DS3231 using the hardware interface
 DS3231 rtc(SDA, SCL);
+// global loop counter
+unsigned int counter = 0;
+bool backlight = false;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -40,6 +42,38 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  // update measurements every 5 sec
+  if (counter % 10 == 0) {
+    getCO2Concentration();
+    printCO2Concentration();
+    printTRH();
+  }
+  
+  checkButtons();
+  displayClockUpdate();
+  delay (500);
+  counter++;
+}
+
+/*
+ * Print temperature and humidity
+ */
+void printTRH() {
+  lcd.setCursor(16, 1);
+  char outstr[4];
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+  dtostrf(t,4,1,outstr);
+  lcd.print(outstr);
+  dtostrf(h,4,1,outstr);
+  lcd.setCursor(54, 1);
+  lcd.print(outstr);
+}
+
+/*
+   Read CO2 concentration from serial port and print to LCD
+*/
+void printCO2Concentration() {
   int buffer = Serial.available();
   if (buffer == 9) {
     int result = 0;
@@ -48,7 +82,10 @@ void loop() {
       if (i == 2) result = b * 256;
       if (i == 3) result = result + b;
     }
-    // myGLCD.printNumI(result, 32, 16, 4);
+
+    lcd.setCursor(24, 3);
+    lcd.print(result);
+    lcd.print(" ppm ");
 
     // warn by backlight if CO2 is too high
     if (result > 1299) {
@@ -63,20 +100,11 @@ void loop() {
       int n = Serial.read();
     }
   }
-
-  getCO2Concentration();
-  // print humidity and temperature
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
-  //myGLCD.printNumF(t, 1, 32, 0);
-  //myGLCD.printNumF(h, 1, 32, 8);
-
-  // Check RTC
-  displayUpdate();
-
-  delay (5000);
 }
 
+/*
+   Send command to CO2 sensor to get conentration
+*/
 void getCO2Concentration() {
   Serial.write(0xFF);
   Serial.write(0x01);
@@ -108,7 +136,7 @@ void loadTemplate() {
   lcd.setCursor(40, 1);
   lcd.print("\020"); // 10 in octal
   lcd.setCursor(46, 0);
-  lcd.print("\011"); 
+  lcd.print("\011");
   lcd.print("H");
   lcd.setCursor(46, 1);
   lcd.print("\021");
@@ -121,12 +149,15 @@ void loadTemplate() {
   lcd.print ("\003"); // subscript bottom
 }
 
-void displayUpdate(void)
-// get time and display it
-{
-  //  myGLCD.setFont(SmallFont);
-  //  myGLCD.print(rtc.getTimeStr(), 0, 35);
-  //  myGLCD.setFont(SmallFont);
+/**
+ * Read RTC and update LCD with clock value
+ */
+void displayClockUpdate() {
+  lcd.setCursor(20, 5);
+  lcd.print(rtc.getTimeStr());
 }
 
+void checkButtons() {
+  // TODO
+}
 
