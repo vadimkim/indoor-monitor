@@ -39,6 +39,7 @@ int debounce_delay = 50;
 
 // main application states
 boolean clock = false;
+boolean sound = false;
 boolean backlight = false;
 boolean co2_warn = false;
 boolean co2_alert = false;
@@ -100,7 +101,7 @@ void loop() {
     }
 
     if (btn1state == LOW && btn2state == HIGH) {
-      sound = true;
+      sound = !sound;
     }
     // if backlight button is pressed turn on backlight for 5 sec.
     if ((backlight && (counter >= backlightCounter && counter - backlightCounter < 15)) || co2_warn) {
@@ -111,9 +112,8 @@ void loop() {
     }
 
     // if buzzer button is pressed generate tone for 2 sec.
-    if (sound) {
-      digitalWrite(BUZZER, HIGH);
-      delay(2000);
+    if (sound || co2_alert) {
+      tone(BUZZER, 3700, 2000);
     }
   } else {
     clock_setup(counter % 3);
@@ -209,9 +209,9 @@ void printCO2Concentration() {
 
     // alert by sound if CO2 is too high
     if (result > CO2ALERT) {
-      co2_warn = true;
+      co2_alert = true;
     } else {
-      co2_warn = false;
+      co2_alert = false;
     }
 
   } else {
