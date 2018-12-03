@@ -17,8 +17,8 @@
 #define DC 5
 #define DIN 6
 #define CLK 7
-#define CO2WARN 1499
-#define CO2ALERT 2001
+#define CO2WARN 1500
+#define CO2ALERT 2200
 #define BTN1 2
 #define BTN2 3
 #define BUZZER 12
@@ -58,7 +58,6 @@ void setup() {
   pinMode(LCDBACKLIGHT, OUTPUT);
   pinMode(BTN1, INPUT);
   pinMode(BTN2, INPUT);
-  pinMode(BUZZER, OUTPUT);
 
   // init CO2 serial
   Serial.begin(9600);
@@ -103,6 +102,12 @@ void loop() {
     if (btn1state == LOW && btn2state == HIGH) {
       sound = !sound;
     }
+
+    // if buzzer button is pressed generate tone for 2 sec.
+    if (sound || co2_alert) {
+      tone(BUZZER, 1700, 300);
+    }
+    
     // if backlight button is pressed turn on backlight for 5 sec.
     if ((backlight && (counter >= backlightCounter && counter - backlightCounter < 15)) || co2_warn) {
       analogWrite(LCDBACKLIGHT, 255);
@@ -111,10 +116,6 @@ void loop() {
       analogWrite(LCDBACKLIGHT, 0);
     }
 
-    // if buzzer button is pressed generate tone for 2 sec.
-    if (sound || co2_alert) {
-      tone(BUZZER, 3700, 2000);
-    }
   } else {
     clock_setup(counter % 3);
   }
