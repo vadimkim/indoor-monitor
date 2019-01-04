@@ -39,12 +39,10 @@ int debounce_delay = 50;
 
 // main application states
 boolean clock = false;
-boolean sound = false;
 boolean backlight = false;
 boolean co2_warn = false;
 boolean co2_alert = false;
 unsigned int backlightCounter = 0;
-unsigned int soundCounter = 0;
 
 // clock set-up state
 unsigned int _position = 0;
@@ -100,11 +98,11 @@ void loop() {
     }
 
     if (btn1state == LOW && btn2state == HIGH) {
-      sound = !sound;
+      co2_alert = true;
     }
 
-    // if buzzer button is pressed generate tone for 2 sec.
-    if (sound || co2_alert) {
+    // if buzzer button is pressed generate tone for one measurement cycle.
+    if (co2_alert) {
       tone(BUZZER, 1700, 300);
     }
     
